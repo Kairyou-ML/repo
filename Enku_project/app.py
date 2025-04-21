@@ -1,163 +1,136 @@
 import streamlit as st
-import random
-import math
+import pickle
 from collections import deque
-import pandas as pd
-import datetime
+import random
+import csv
+import os
+import io  # To handle uploaded files
 
-def load_words_from_csv(file_path=None):
-    if file_path:
-        try:
-            df = pd.read_csv(file_path)
-            if 'English' not in df.columns or 'Vietnamese' not in df.columns:
-                raise ValueError("CSV must have 'English' and 'Vietnamese' columns")
-            word_list = [(row['English'].strip(), row['Vietnamese'].strip()) for _, row in df.iterrows()]
-        except Exception as e:
-            st.error(f"Error reading CSV: {e}. Using default word list.")
-            word_list = []
+# Load wordlist from uploaded or local CSV
+def load_wordlist(file_content=None):
+    rows = []
+    if file_content:
+        text_io = io.StringIO(file_content)
+        reader = csv.reader(text_io)
+        rows = list(reader)
     else:
-        word_pairs_raw = [
-            "apple - quả táo",
-            "dog - con chó",
-            "book - quyển sách",
-            "car - xe hơi",
-            "water - nước",
-            "computer - máy tính",
-            "house - ngôi nhà",
-            "school - trường học",
-            "pen - cây bút",
-            "table - cái bàn"
-        ]
-        word_list = [(en.strip(), vi.strip()) for item in word_pairs_raw for en, vi in [item.split(" - ")]]
-    
-    word_data = [
-        {
-            'en': en,
-            'vi': vi,
-            'interval': 1,
-            'ease': 2.5,
-            'repetitions': 0,
-            'next_review': datetime.datetime.now()
-        }
-        for en, vi in word_list
-    ]
-    return word_data
+        with open('input.csv', 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            rows = list(reader)
 
-def create_question(word_item, all_meanings):
-    correct_meaning = word_item['vi']
-    wrong_meanings = random.sample([m for m in all_meanings if m != correct_meaning], 7)
-    options = wrong_meanings + [correct_meaning]
+    return [{'word': row[0], 'meaning': row[1], 'correct_streak': 0, 'hint': '', 'history': []}
+            for row in rows if len(row) >= 2]
+
+
+def initialize_progress(wordlist):
+    queue = deque(random.sample(wordlist, len(wordlist)))
+    return {'wordlist': wordlist, 'queue': queue}
+
+def save_progress(progress):
+    os.makedirs('data', exist_ok=True)
+    with open('data/output.pkl', 'wb') as f:
+        pickle.dump(progress, f)
+
+def load_progress():
+    try:
+        with open('data/output.pkl', 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return None
+
+def get_wrong_answers(wordlist, correct_meaning):
+    wrong_answers = [w['meaning'] for w in wordlist if w['meaning'] != correct_meaning]
+    return random.sample(wrong_answers, min(3, len(wrong_answers)))
+
+def generate_options(current_word, wordlist):
+    correct = current_word['meaning']
+    wrongs = get_wrong_answers(wordlist, correct)
+    options = [correct] + wrongs
     random.shuffle(options)
-    return word_item['en'], options, correct_meaning
+    return options
 
-def update_spaced_repetition(word_item, quality):
-    now = datetime.datetime.now()
-    if quality >= 3:
-        word_item['repetitions'] += 1
-        if word_item['repetitions'] == 1:
-            word_item['interval'] = 1
-        elif word_item['repetitions'] == 2:
-            word_item['interval'] = 6
-        else:
-            word_item['interval'] = math.ceil(word_item['interval'] * word_item['ease'])
-        word_item['ease'] = max(1.3, word_item['ease'] + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-        word_item['next_review'] = now + datetime.timedelta(days=word_item['interval'])
-    else:
-        word_item['repetitions'] = 0
-        word_item['interval'] = 1
-        word_item['ease'] = max(1.3, word_item['ease'] - 0.2)
-        word_item['next_review'] = now
-    return word_item
+# ----------------- STREAMLIT APP -----------------
 
-# Streamlit app
-st.set_page_config(page_title="Enku Vocabulary", page_icon="📚", layout="centered")
-st.title("📚 Enku Vocabulary Trainer")
-st.markdown("Learn English-Vietnamese vocabulary with spaced repetition!")
+st.title("📘 Enku Vocabulary Trainer (Web Uploadable)")
 
-# Initialize session state
-if 'word_data' not in st.session_state:
-    word_data = load_words_from_csv()  # Use None or provide path, e.g., "input.csv"
-    random.shuffle(word_data)
-    st.session_state.word_data = word_data
-    st.session_state.queue = deque(word_data)
-    st.session_state.correct_count = 0
-    st.session_state.total = len(word_data)
-    st.session_state.current_word = None
-    st.session_state.options = None
-    st.session_state.correct_meaning = None
-    st.session_state.answered = False
-    st.session_state.example_submitted = False
-
-# File uploader for CSV
 uploaded_file = st.file_uploader("Upload a CSV file (with 'English' and 'Vietnamese' columns)", type="csv")
-if uploaded_file is not None:
-    st.session_state.word_data = load_words_from_csv(uploaded_file)
-    random.shuffle(st.session_state.word_data)
-    st.session_state.queue = deque(st.session_state.word_data)
-    st.session_state.total = len(st.session_state.word_data)
-    st.session_state.correct_count = 0
-    st.session_state.current_word = None
-    st.session_state.answered = False
-    st.session_state.example_submitted = False
+use_uploaded = uploaded_file is not None
 
-# Main quiz logic
-if st.session_state.queue:
-    now = datetime.datetime.now()
-    word_item = st.session_state.queue[0]  # Peek at the first item
-    if word_item['next_review'] <= now:
-        # Pop the word for review
-        word_item = st.session_state.queue.popleft()
-        st.session_state.current_word, st.session_state.options, st.session_state.correct_meaning = create_question(
-            word_item, [item['vi'] for item in st.session_state.word_data]
-        )
+# SAFELY read uploaded file content once
+if use_uploaded:
+    file_content = uploaded_file.getvalue().decode("utf-8")
+else:
+    file_content = None
+
+# Load progress and initialize
+if 'progress' not in st.session_state or use_uploaded:
+    wordlist = load_wordlist(file_content)
+    progress = initialize_progress(wordlist)
+    st.session_state.progress = progress
+    st.session_state.load_new_question = True
+
+st.session_state.setdefault('show_hint_input', False)
+st.session_state.setdefault('temp_hint', "")
+st.session_state.setdefault('submitted', False)
+st.session_state.setdefault('load_new_question', True)
+
+if st.session_state.load_new_question:
+    if st.session_state.progress['queue']:
+        st.session_state.current_word = st.session_state.progress['queue'].popleft()
+        st.session_state.options = generate_options(st.session_state.current_word, st.session_state.progress['wordlist'])
+        st.session_state.submitted = False
+        st.session_state.load_new_question = False
     else:
-        st.session_state.queue.append(st.session_state.queue.popleft())  # Not due, rotate
-        st.write("No words due for review yet. Try again later!")
+        st.write("🎉 You've reviewed all words!")
         st.stop()
 
-    # Display question
-    st.subheader(f"Từ: {st.session_state.current_word}")
-    answer = st.radio("Chọn đáp án:", st.session_state.options, key=f"answer_radio_{st.session_state.current_word}", index=None)
-    st.write(f"Đáp án bạn chọn: {answer}")  # Debug line
+if st.session_state.current_word['hint']:
+    st.info(f"💡 Hint: {st.session_state.current_word['hint']}")
 
-    if not st.session_state.answered:
-        if st.button("Submit"):
-            st.session_state.answered = True
-            if answer == st.session_state.correct_meaning:
-                st.success("✅ Đúng!")
-                st.session_state.correct_count += 1
-                quality = 5
-            else:
-                st.error(f"❌ Sai! Đáp án đúng là: {st.session_state.correct_meaning}")
-                quality = 0
+st.write(f"What is the meaning of **{st.session_state.current_word['word']}**?")
+selected_option = st.radio("Select the correct meaning:", st.session_state.options)
 
-            # Update spaced repetition
-            word_item = update_spaced_repetition(word_item, quality)
-            st.session_state.queue.append(word_item)
+if st.button("Submit Answer") and not st.session_state.submitted:
+    correct = st.session_state.current_word['meaning']
+    st.session_state.submitted = True
 
-    # Handle example input for wrong answers
-    if st.session_state.answered and answer != st.session_state.correct_meaning and not st.session_state.example_submitted:
-        example = st.text_input("Nhập ví dụ sử dụng từ này (bắt buộc):")
-        if st.button("Submit Example"):
-            if example.strip():
-                st.session_state.example_submitted = True
-                st.success("Example submitted!")
-            else:
-                st.warning("⚠️ Vui lòng nhập ví dụ!")
-    elif st.session_state.answered:
-        if st.button("Tiếp tục"):
-            st.session_state.answered = False
-            st.session_state.example_submitted = False
-            st.session_state.current_word = None  # Force re-render of the question
+    if selected_option == correct:
+        st.success("✅ Correct!")
+        st.session_state.current_word['correct_streak'] += 1
+        if st.session_state.current_word['correct_streak'] < 2:
+            st.session_state.progress['queue'].append(st.session_state.current_word)
+    else:
+        st.error(f"❌ Incorrect. The correct answer is: **{correct}**")
+        st.session_state.current_word['correct_streak'] = 0
+        st.session_state.progress['queue'].appendleft(st.session_state.current_word)
+        st.session_state.show_hint_input = True
+        st.session_state.temp_hint = ""
 
-else:
-    st.markdown(f"🎉 Kết thúc luyện tập! Đúng {st.session_state.correct_count}/{st.session_state.total}.")
-    if st.button("Bắt đầu lại"):
-        st.session_state.word_data = load_words_from_csv()
-        random.shuffle(st.session_state.word_data)
-        st.session_state.queue = deque(st.session_state.word_data)
-        st.session_state.correct_count = 0
-        st.session_state.total = len(st.session_state.word_data)
-        st.session_state.current_word = None
-        st.session_state.answered = False
-        st.session_state.example_submitted = False
+    save_progress(st.session_state.progress)
+
+if st.session_state.show_hint_input:
+    st.text_input("Add a hint for this word:", key="temp_hint")
+    if st.button("Save Hint") and st.session_state.temp_hint.strip():
+        st.session_state.current_word['hint'] = st.session_state.temp_hint.strip()
+        st.session_state.show_hint_input = False
+        st.session_state.progress['queue'].append(st.session_state.current_word)
+        save_progress(st.session_state.progress)
+        st.session_state.load_new_question = True
+        st.rerun()
+
+if st.session_state.submitted and not st.session_state.show_hint_input:
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("Next"):
+            st.session_state.load_new_question = True
+            st.rerun()
+    with col2:
+        if st.button("🔄 Reset Progress"):
+            if os.path.exists('data/output.pkl'):
+                os.remove('data/output.pkl')
+            st.rerun()
+
+# Progress bar
+total = len(st.session_state.progress['wordlist'])
+learned = sum(1 for w in st.session_state.progress['wordlist'] if w['correct_streak'] >= 2)
+st.markdown(f"📚 **Progress: {learned} / {total} words learned**")
