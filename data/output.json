@@ -1,0 +1,300 @@
+{
+    "word_list": [
+        {
+            "word": "moon",
+            "meaning": "mặt trăng",
+            "correct_streak": 0,
+            "hint": "32",
+            "history": [
+                false
+            ]
+        },
+        {
+            "word": "dog",
+            "meaning": "con chó",
+            "correct_streak": 1,
+            "hint": "43",
+            "history": [
+                false,
+                true
+            ]
+        },
+        {
+            "word": "water",
+            "meaning": "nước",
+            "correct_streak": 0,
+            "hint": "gg",
+            "history": [
+                false
+            ]
+        },
+        {
+            "word": "pen",
+            "meaning": "cây bút",
+            "correct_streak": 2,
+            "hint": null,
+            "history": [
+                true,
+                true
+            ]
+        },
+        {
+            "word": "book",
+            "meaning": "quyển sách",
+            "correct_streak": 2,
+            "hint": null,
+            "history": [
+                true,
+                true
+            ]
+        },
+        {
+            "word": "car",
+            "meaning": "xe hơi",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "computer",
+            "meaning": "máy tính",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "bird",
+            "meaning": "chim",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "hihi",
+            "meaning": "hehe",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "flower",
+            "meaning": "hoa",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "sun",
+            "meaning": "mặt trời",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "table",
+            "meaning": "cái bàn",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "apple",
+            "meaning": "quả táo",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "tree",
+            "meaning": "cây",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "house",
+            "meaning": "ngôi nhà",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "school",
+            "meaning": "trường học",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        }
+    ],
+    "queue": [
+        {
+            "word": "moon",
+            "meaning": "mặt trăng",
+            "correct_streak": 0,
+            "hint": "1",
+            "history": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "water",
+            "meaning": "nước",
+            "correct_streak": 0,
+            "hint": "11",
+            "history": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "computer",
+            "meaning": "máy tính",
+            "correct_streak": 0,
+            "hint": "1",
+            "history": [
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "bird",
+            "meaning": "chim",
+            "correct_streak": 0,
+            "hint": "1",
+            "history": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "car",
+            "meaning": "xe hơi",
+            "correct_streak": 0,
+            "hint": "1",
+            "history": [
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "dog",
+            "meaning": "con chó",
+            "correct_streak": 0,
+            "hint": "1",
+            "history": [
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ]
+        },
+        {
+            "word": "hihi",
+            "meaning": "hehe",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "flower",
+            "meaning": "hoa",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "sun",
+            "meaning": "mặt trời",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "table",
+            "meaning": "cái bàn",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "apple",
+            "meaning": "quả táo",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "tree",
+            "meaning": "cây",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "house",
+            "meaning": "ngôi nhà",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        },
+        {
+            "word": "school",
+            "meaning": "trường học",
+            "correct_streak": 0,
+            "hint": null,
+            "history": []
+        }
+    ]
+}
